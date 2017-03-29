@@ -40,41 +40,21 @@
         <property name="basePackage" value="com.app.mvc"/>
     </bean>
 
-    <bean id="db-master" class="com.alibaba.druid.pool.DruidDataSource">
-        <property name="driverClassName" value="${master.jdbc.driverClassName}"/>
-        <property name="url" value="${master.jdbc.url}"/>
-        <property name="username" value="${master.jdbc.username}"/>
-        <property name="password" value="${master.jdbc.password}"/>
-        <property name="initialSize" value="3"/>
-        <property name="minIdle" value="3"/>
-        <property name="maxActive" value="20"/>
-        <property name="maxWait" value="60000"/>
-        <property name="filters" value="stat,wall"/>
-    </bean>
-
-    <bean id="db-log" class="org.apache.commons.dbcp.BasicDataSource">
-        <property name="driverClassName" value="${log.jdbc.driverClassName}"/>
-        <property name="url" value="${log.jdbc.url}"/>
-        <property name="username" value="${log.jdbc.username}"/>
-        <property name="password" value="${log.jdbc.password}"/>
-        <property name="initialSize" value="3"/>
-        <property name="minIdle" value="3"/>
-        <property name="maxActive" value="20"/>
-        <property name="maxWait" value="60000"/>
-    </bean>
-
-    <!-- 动态数据源 -->
-    <bean id="dataSource" class="com.app.mvc.datasource.DynamicDataSource">
-        <property name="targetDataSources">
-            <map key-type="java.lang.String">
-                <entry key="db-master" value-ref="db-master"/>
-                <entry key="db-log" value-ref="db-log"/>
-            </map>
+    <!-- 数据源定义,使用Apache DBCP 连接池 -->
+    <bean id="dataSourceConfig"
+          class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath*:jdbc.properties</value>
+            </list>
         </property>
-        <property name="defaultTargetDataSource" ref="db-master"/>
-        <property name="lenientFallback" value="false"/>
+        <property name="ignoreResourceNotFound" value="true"/>
     </bean>
 
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSourceFactory"
+          factory-method="createDataSource">
+        <constructor-arg ref="dataSourceConfig"></constructor-arg>
+    </bean>
 
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
@@ -85,15 +65,4 @@
             </list>
         </property>
     </bean>
-
-    <!-- druid -->
-    <bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
-        <property name="slowSqlMillis" value="3000"/>
-        <property name="logSlowSql" value="true"/>
-        <property name="mergeSql" value="true"/>
-    </bean>
-    <bean id="wall-filter" class="com.alibaba.druid.wall.WallFilter">
-        <property name="dbType" value="mysql"/>
-    </bean>
-
 </beans>
